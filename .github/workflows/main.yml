@@ -59,6 +59,13 @@ jobs:
         run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'mv /root/backup /root/api/file'
         shell: bash
 
+      - name: Install pkg
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'npm i'
+        shell: bash
+
       - name: Restart pm2
         env:
           REMOTE_IP: ${{ secrets.REMOTE_IP }}
