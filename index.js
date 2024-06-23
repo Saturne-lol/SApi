@@ -14,6 +14,8 @@ const upload = multer({dest: 'uploads/'});
 
 
 app.use(cors());
+app.options('*', cors());
+
 app.get('/upload', (req, res) => {
     const type = req.query.type;
     const fileName = req.query.fileName;
