@@ -5,7 +5,6 @@ const multer = require('multer');
 const cors = require('cors');
 const canvas = require('canvas');
 const {loadImage} = require("canvas");
-const {write} = require("fs");
 
 const app = express();
 
