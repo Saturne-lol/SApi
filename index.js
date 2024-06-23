@@ -68,7 +68,7 @@ app.get('/delete/:type/:fileName', (req, res) => {
     return res.sendStatus(200);
 })
 
-app('/', (req, res) => {
+app.get('/', (req, res) => {
     res.send('Bro what the fuck ??? Why are you look this ?' +
         'Get out ! Cleboost :)');
 })
