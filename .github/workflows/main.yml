@@ -1,0 +1,67 @@
+name: Saturne API Deployment
+on:
+  push:
+    branches:
+      - deployment
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: deployment
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Install rsync on remote
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'sudo apt-get update && sudo apt-get install -y rsync'
+        shell: bash
+
+
+      - name: Backup Data
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'mv /root/api/file /root/backup'
+        shell: bash
+
+      - name: Clean remote directory
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'rm -rf /root/api/*'
+        shell: bash
+
+      - name: Upload via rsync
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: rsync -avz --delete ./ ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }}:/root/api
+        shell: bash
+
+      - name: Set data backup
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'mv /root/backup /root/api/file'
+        shell: bash
+
+      - name: Restart pm2
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'source ~/.nvm/nvm.sh && ~/.nvm/versions/node/v22.3.0/bin/pm2 restart all'
+        shell: bash
