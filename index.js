@@ -14,6 +14,8 @@ const upload = multer({dest: 'uploads/'});
 
 
 app.use(cors());
+app.options('*', cors());
+
 app.get('/upload', (req, res) => {
     const type = req.query.type;
     const fileName = req.query.fileName;
@@ -69,7 +71,7 @@ app.get('/delete/:type/:fileName', (req, res) => {
 })
 
 app.get('/', (req, res) => {
-    res.send('Bro what the fuck ??? Why are you look this ?' +
+    res.send('Bro what the fuck ??? Why are you look this ? ' +
         'Get out ! Cleboost :)');
 })
 
