@@ -5,7 +5,7 @@ on:
       - deployment
   pull_request:
     branches:
-      - main
+      - maina
   workflow_dispatch:
 
 jobs:
@@ -27,9 +27,11 @@ jobs:
         env:
           REMOTE_IP: ${{ secrets.REMOTE_IP }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'sudo apt-get update && sudo apt-get install -y rsync'
+        run: |
+          for i in {1..5}; do 
+            ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'sudo apt-get update && sudo apt-get install -y rsync' && break || sleep 15; 
+          done
         shell: bash
-
 
       - name: Backup Data
         env:
@@ -52,6 +54,17 @@ jobs:
         run: rsync -avz --delete ./ ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }}:/root/api
         shell: bash
 
+      - name: Install npm dependencies on remote
+        env:
+          REMOTE_IP: ${{ secrets.REMOTE_IP }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'export NVM_DIR="$HOME/.nvm" && 
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && 
+          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && 
+          cd /root/api && npm install'
+        shell: bash
+
       - name: Set data backup
         env:
           REMOTE_IP: ${{ secrets.REMOTE_IP }}
@@ -63,5 +76,9 @@ jobs:
         env:
           REMOTE_IP: ${{ secrets.REMOTE_IP }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        run: ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'source ~/.nvm/nvm.sh && ~/.nvm/versions/node/v22.3.0/bin/pm2 restart all'
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 ${{ env.REMOTE_USER }}@${{ env.REMOTE_IP }} 'export NVM_DIR="$HOME/.nvm" && 
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && 
+          [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && 
+          pm2 restart all'
         shell: bash
