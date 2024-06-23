@@ -55,6 +55,24 @@ app.get('/file/:type/:fileName', (req, res) => {
     return res.sendFile(targetPath, {root: __dirname})
 })
 
+app.get('/delete/:type/:fileName', (req, res) => {
+    const type = req.params.type;
+    const fileName = req.params.fileName;
+
+    const targetPath = `file/${type}/${fileName}.png`;
+
+    const isExist = fs.existsSync(targetPath);
+    if (!isExist) return res.sendStatus(404);
+
+    fs.unlinkSync(targetPath);
+    return res.sendStatus(200);
+})
+
+app('/', (req, res) => {
+    res.send('Bro what the fuck ??? Why are you look this ?' +
+        'Get out ! Cleboost :)');
+})
+
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
