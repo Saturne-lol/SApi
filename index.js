@@ -25,7 +25,9 @@ app.get('/upload', (req, res) => {
 
     cacheUpLink.push({id, type, fileName, plan});
 
-    res.send({link: `${req.secure ? 'https' : 'http'}://${req.get('host')}/upload/${id}`});
+    const shema = req.get('host').includes("localhost") ? "http" : "https";
+
+    res.send({link: `${shema}://${req.get('host')}/upload/${id}`});
 })
 
 app.post('/upload/:id', upload.single('file'), async (req, res) => {
@@ -56,7 +58,10 @@ app.get('/file/:type/:fileName', (req, res) => {
     const targetPath = `file/${type}/${fileName}.png`;
 
     const isExist = fs.existsSync(targetPath);
-    if (!isExist) return res.sendFile("default.png", {root: __dirname});
+    if (!isExist) {
+        if (type === "profile") return res.sendFile("default.png", {root: __dirname});
+        return res.sendFile("default.png", {root: __dirname});
+    }
 
     return res.sendFile(targetPath, {root: __dirname})
 })
