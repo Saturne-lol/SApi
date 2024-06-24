@@ -25,9 +25,9 @@ app.get('/upload', (req, res) => {
 
     cacheUpLink.push({id, type, fileName, plan});
 
-    const shema = req.get('host').includes("localhost") ? "http" : "https";
+    const schema = req.get('host').includes("localhost") ? "http" : "https";
 
-    res.send({link: `${shema}://${req.get('host')}/upload/${id}`});
+    res.send({link: `${schema}://${req.get('host')}/upload/${id}`});
 })
 
 app.post('/upload/:id', upload.single('file'), async (req, res) => {
@@ -48,7 +48,8 @@ app.post('/upload/:id', upload.single('file'), async (req, res) => {
 
     await fs.renameSync(tempPath, targetPath)
     postTrait(targetPath, plan, type)
-    return cacheUpLink.splice(cacheUpLink.findIndex(e => e.id === id), 1);
+    cacheUpLink.splice(cacheUpLink.findIndex(e => e.id === id), 1);
+    return res.sendStatus(200);
 });
 
 app.get('/file/:type/:fileName', (req, res) => {
@@ -84,7 +85,7 @@ app.get('/', (req, res) => {
         'Get out ! Cleboost :)');
 })
 
-app.listen(3000, () => {
+app.listen(3001, () => {
     console.log('Server is running on port 3000');
 });
 
