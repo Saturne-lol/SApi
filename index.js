@@ -85,7 +85,7 @@ app.get('/', (req, res) => {
         'Get out ! Cleboost :)');
 })
 
-app.listen(3001, () => {
+app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
 
