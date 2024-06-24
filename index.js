@@ -3,8 +3,7 @@ const fs = require('fs');
 const cuuid = require('cuuid');
 const multer = require('multer');
 const cors = require('cors');
-const canvas = require('canvas');
-const {loadImage} = require("canvas");
+const {loadImage, createCanvas} = require("canvas");
 
 const app = express();
 
@@ -17,13 +16,16 @@ app.use(cors());
 app.options('*', cors());
 
 app.get('/upload', (req, res) => {
+    if (!req.query.type || !req.query.fileName || !req.query.plan) return res.sendStatus(400);
+
     const type = req.query.type;
     const fileName = req.query.fileName;
+    const plan = req.query.plan;
     const id = cuuid();
 
-    cacheUpLink.push({id, type, fileName});
+    cacheUpLink.push({id, type, fileName, plan});
 
-    res.send({link: `https://${req.get('host')}/upload/${id}`});
+    res.send({link: `${req.secure ? 'https' : 'http'}://${req.get('host')}/upload/${id}`});
 })
 
 app.post('/upload/:id', upload.single('file'), async (req, res) => {
@@ -32,8 +34,10 @@ app.post('/upload/:id', upload.single('file'), async (req, res) => {
         return res.sendStatus(404);
     }
 
-    const type = cacheUpLink.find(e => e.id === id).type;
-    const fileName = cacheUpLink.find(e => e.id === id).fileName;
+    const urlStorage = cacheUpLink.find(e => e.id === id)
+    const type = urlStorage.type;
+    const fileName = urlStorage.fileName;
+    const plan = urlStorage.plan;
     const targetPath = `file/${type}/${fileName}`;
 
     if (!fs.existsSync(`file/${type}`)) fs.mkdirSync(`file/${type}`);
@@ -41,7 +45,7 @@ app.post('/upload/:id', upload.single('file'), async (req, res) => {
     const tempPath = req.file.path;
 
     await fs.renameSync(tempPath, targetPath)
-    postTrait(targetPath);
+    postTrait(targetPath, plan, type)
     return cacheUpLink.splice(cacheUpLink.findIndex(e => e.id === id), 1);
 });
 
@@ -79,11 +83,26 @@ app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
 
-async function postTrait(imgPath) {
-    const canva = canvas.createCanvas(200, 200);
-    const ctx = canva.getContext('2d');
-    ctx.drawImage(await loadImage(imgPath), 0, 0, 200, 200);
+async function postTrait(imgPath, plan, type) {
+    const image = await loadImage(imgPath)
 
-    const buffer = canva.toBuffer('image/png');
+    const ratioHMax = (type, plan) => {
+        if (type === "profile") return 200
+        if (type === "background") {
+            if (plan === 0) return 720
+            if (plan > 0) return 1080
+        }
+    }
+
+    const newH = ratioHMax(type, plan)
+    const ratio = image.width / image.height
+
+    const newW = newH * ratio
+
+    const canvas = createCanvas(newH, newW)
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0, newW, newH);
+
+    const buffer = canvas.toBuffer('image/png');
     return fs.writeFileSync(imgPath, buffer);
 }
