@@ -60,8 +60,7 @@ app.get('/file/:type/:fileName', (req, res) => {
 
     const isExist = fs.existsSync(targetPath);
     if (!isExist) {
-        if (type === "profile") return res.sendFile("default.png", {root: __dirname});
-        return res.sendFile("default.png", {root: __dirname});
+        return res.sendFile("defaults/"+type+".png", {root: __dirname});
     }
 
     return res.sendFile(targetPath, {root: __dirname})
