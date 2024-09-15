@@ -96,6 +96,7 @@ app.post('/upload/:id', upload.single('file'), async (req, res) => {
                 break;
             case 'background':
                 if (req.file.mimetype === 'video/mp4') await resizeVideo(targetPath, plan === 0 ? 720 : (plan === 1 ? 1080 : 2160), plan === 0 ? 1280 : (plan === 1 ? 1920 : 3840));
+                if (req.file.mimetype === 'video/mp4') await cropVideo(targetPath, 20);
                 if (req.file.mimetype === 'image/png') await resizeImg(targetPath, plan === 0 ? 720 : (plan === 1 ? 1080 : 2160), plan === 0 ? 1280 : (plan === 1 ? 1920 : 3840));
                 break;
             case 'cursor':
@@ -215,6 +216,25 @@ async function resizeVideo(vidPath, h, w) {
     });
 }
 
+async function cropVideo(vidPath, timeSec) {
+    if (!vidPath.startsWith('file/')) return console.log('Invalid file path');
+    if (!fs.existsSync(vidPath)) return console.log('File does not exist');
+    if (!['video/mp4'].includes(require('mime-types').lookup(vidPath))) return console.log('File is not a video');
+
+    if (timeSec <= 0) return console.log('Invalid time');
+    if (timeSec >= await getVideoDuration(vidPath)) return console.log('No need to crop');
+
+    return new Promise((resolve, reject) => {
+        ffmpeg(vidPath)
+            .setStartTime('00:00:00')
+            .setDuration(timeSec)
+            .output('file/video.mp4')
+            .on('end', resolve)
+            .on('error', reject)
+            .run();
+    });
+}
+
 async function getVideoSize(vidPath) {
     if (!vidPath.startsWith('file/')) return console.log('Invalid file path');
     if (!fs.existsSync(vidPath)) return console.log('File does not exist');
@@ -227,6 +247,21 @@ async function getVideoSize(vidPath) {
             }
             const {width, height} = metadata.streams.find(stream => stream.width && stream.height);
             resolve({width, height});
+        });
+    });
+}
+
+async function getVideoDuration(vidPath) {
+    if (!vidPath.startsWith('file/')) return console.log('Invalid file path');
+    if (!fs.existsSync(vidPath)) return console.log('File does not exist');
+    if (!['video/mp4', 'video/avi', 'video/mov'].includes(require('mime-types').lookup(vidPath))) return console.log('File is not a video');
+
+    return new Promise((resolve, reject) => {
+        ffmpeg.ffprobe(vidPath, (err, metadata) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(metadata.format.duration);
         });
     });
 }
