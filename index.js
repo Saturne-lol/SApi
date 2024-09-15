@@ -51,8 +51,6 @@ app.get('/upload', async (req, res) => {
     if (fileName.endsWith('.mp4') && plan === '0') return res.sendStatus(402);
 
     const id = cupid();
-    const clipboardy = await import('clipboardy').then(e => e.default);
-    clipboardy.writeSync(id);
     cacheUpLink.push({id, type, fileName, plan});
     const schema = req.get('host').includes('localhost') ? 'http' : 'https';
     res.send({link: `${schema}://${req.get('host')}/upload/${id}`});
