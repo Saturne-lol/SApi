@@ -81,7 +81,14 @@ app.post('/upload/:id', upload.single('file'), async (req, res) => {
         if (!fs.existsSync(`file/${type}`)) fs.mkdirSync(`file/${type}`, {recursive: true});
 
         const tempPath = req.file.path;
-        if (fs.existsSync(targetPath)) await fs.promises.unlink(targetPath);
+        const baseName = fileName.split('.').slice(0, -1).join('.');
+        const dirPath = `file/${type}`;
+        const files = await fs.promises.readdir(dirPath);
+        for (const file of files) {
+            if (file.startsWith(baseName)) {
+                await fs.promises.unlink(`${dirPath}/${file}`);
+            }
+        }
 
         await fs.promises.rename(tempPath, targetPath);
         switch (type) {
@@ -111,18 +118,22 @@ app.get('/file/:type/:fileName', (req, res) => {
     const type = req.params.type;
     const fileName = req.params.fileName;
 
-    if (!/^[a-zA-Z0-9_-]+$/.test(type) || !/^[a-zA-Z0-9_-]+\.(png|mp4)$/.test(fileName)) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(type) || !/^[a-zA-Z0-9_-]+$/.test(fileName)) {
         return res.sendStatus(400);
     }
 
-    const targetPath = `file/${type}/${fileName}`;
-
-    const isExist = fs.existsSync(targetPath);
-    if (!isExist) {
-        if (type === 'cursor') return;
-        return res.sendFile('defaults/' + type + '.png', {root: __dirname});
+    const dirPath = `file/${type}`;
+    if (!fs.existsSync(dirPath)) {
+        return res.sendStatus(404);
     }
 
+    const files = fs.readdirSync(dirPath);
+    const matchedFiles = files.filter(file => file.startsWith(fileName) && /\.(png|mp4)$/.test(file));
+    if (matchedFiles.length !== 1) {
+        return res.sendStatus(404);
+    }
+
+    const targetPath = `${dirPath}/${matchedFiles[0]}`;
     return res.sendFile(targetPath, {root: __dirname});
 });
 
