@@ -2,10 +2,7 @@ name: Saturne API Deployment
 on:
   push:
     branches:
-      - deployment
-  pull_request:
-    branches:
-      - maina
+      - master
   workflow_dispatch:
 
 jobs:
@@ -15,8 +12,6 @@ jobs:
     steps:
       - name: Checkout deployment branch
         uses: actions/checkout@v4
-        with:
-          ref: deployment
 
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.5.3
