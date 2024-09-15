@@ -35,6 +35,7 @@ app.options('*', cors());
 const token = 'i0yb@zge9$ZI9n';
 app.use((req, res, next) => {
     if (req.path.startsWith('/file/') && req.method === 'GET') return next();
+    if (req.path.startsWith('/upload/') && req.method === 'POST') return next();
     if (req.headers.authorization !== token) return res.sendStatus(401);
     next();
 });
