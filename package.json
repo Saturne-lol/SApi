@@ -13,7 +13,7 @@
     "canvas": "^2.11.2",
     "cors": "^2.8.5",
     "cuuid": "^0.3.0",
-    "express": "^4.21.0",
+    "express": "^4.21.1",
     "ffmpeg-static": "^5.2.0",
     "ffprobe-static": "^3.1.0",
     "fluent-ffmpeg": "^2.1.3",
